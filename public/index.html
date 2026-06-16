@@ -454,9 +454,6 @@ body::after {
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const AudioCtx=window.AudioContext||window.webkitAudioContext;let audioCtx,musicGain,sfxGain,masterGain,musicPlaying=false;
-// ===================== SOCKET + GAME STATE =====================
-const socket = io();
-let promptHistory = [];
 function initAudio(){if(audioCtx)return;audioCtx=new AudioCtx();masterGain=audioCtx.createGain();masterGain.gain.value=1;masterGain.connect(audioCtx.destination);musicGain=audioCtx.createGain();musicGain.gain.value=0.4;musicGain.connect(masterGain);sfxGain=audioCtx.createGain();sfxGain.gain.value=0.6;sfxGain.connect(masterGain);}
 
 // ===================== MUSIC: Lindana (145BPM, Bb-C-F-Cm, pop-punk) =====================
@@ -868,6 +865,10 @@ results.forEach((r,i)=>{if(r.guess===null)return;setTimeout(()=>{const angle=toA
 // Add glow filter for current user
 const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');defs.innerHTML='<filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>';svg.insertBefore(defs,svg.firstChild);}
 
+// ===================== SOCKET + REAL-TIME =====================
+const socket = io();
+let promptHistory = [];
+
 // ===================== FLOATING REACTIONS (YouTube-style) =====================
 const REACTIONS = [
   {icon:'❤️',name:'heart'},
@@ -931,6 +932,7 @@ socket.on('reactionBroadcast',({icon,from})=>{
 });
 
 
+// ===================== SOCKET + GAME STATE =====================
 let myName = '', myIcon = 'star', isHost = false, isTuner = false;
 let currentTimer = null, timerDuration = 20, guessLocked = false;
 
@@ -947,7 +949,35 @@ function showToast(msg){const e=document.querySelector('.toast');if(e)e.remove()
 function getIconSVG(name,size=24){return `<svg width="${size}" height="${size}" class="player-icon"><use href="#ico-${name}"/></svg>`;}
 
 // ===================== PROMPT HISTORY + FIRE REACTIONS =====================
-
+function _unusedPromptPanel() {
+  let panel = document.getElementById('prompt-panel');
+  if(!panel){panel=document.createElement('div');panel.id='prompt-panel';panel.className='prompt-panel';document.body.appendChild(panel);}
+  panel.innerHTML = '';
+  promptHistory.forEach((p, i) => {
+    const entry = document.createElement('div');
+    entry.className = 'prompt-entry';
+    entry.innerHTML = `
+      <div style="flex:1;overflow:hidden;">
+        <div class="prompt-text">${p.answer}</div>
+        <div class="prompt-tuner">${p.tuner} — ${p.category}</div>
+      </div>
+      <button class="fire-btn ${p.myFire?'fired':''}" data-idx="${i}">
+        <span>🔥</span><span class="fire-count">${p.fires||0}</span>
+      </button>
+    `;
+    entry.querySelector('.fire-btn').addEventListener('click', (e) => {
+      if(p.myFire) return;
+      p.myFire = true;
+      socket.emit('fireReaction', { turnIndex: i });
+      playSound('score');
+      const btn = e.currentTarget;
+      const rect = btn.getBoundingClientRect();
+      fireParticles(rect.left+10, rect.top, 12);
+      renderPromptPanel();
+    });
+    panel.appendChild(entry);
+  });
+}
 
 // fire reactions replaced by floating reactions
 
@@ -999,7 +1029,7 @@ document.getElementById('setting-rounds').addEventListener('change',e=>{socket.e
 document.getElementById('btn-start').addEventListener('click',()=>{socket.emit('startGame');playSound('score');});
 
 // ===================== GAME FLOW =====================
-socket.on('gameStarted',()=>{playSound('score');explodeConfetti(window.innerWidth/2,window.innerHeight/2,60);// prompts tracked server-side only});
+socket.on('gameStarted',()=>{playSound('score');explodeConfetti(window.innerWidth/2,window.innerHeight/2,60);});
 socket.on('newTurn',({tunerName,tunerIcon,roundNumber,turnNumber,totalTurns})=>{
   if(tunerName===myName)return; isTuner=false;showScreen('screen-waiting');
   document.getElementById('waiting-title').textContent=`${tunerName} is the Tuner`;
@@ -1080,7 +1110,7 @@ function startTimer(duration){
 // ===================== REVEAL (SEMICIRCLE DIAL - NO NUMBERS) =====================
 socket.on('reveal',({actual,category,answer,tunerName,tunerIcon,tunerPoints,results,scores,isLastTurn})=>{
   if(currentTimer){clearInterval(currentTimer);currentTimer=null;}
-  showScreen('screen-reveal');playSound('reveal');if(typeof trexInstance!=='undefined'&&trexInstance)trexInstance.quip();
+  showScreen('screen-reveal');playSound('reveal');
   document.getElementById('reveal-category').textContent=category;
   document.getElementById('reveal-answer').textContent=answer;
   document.getElementById('reveal-number').textContent=''; // no number shown!
@@ -1145,6 +1175,7 @@ socket.on('gameCancelled',({reason})=>{showToast(`Game ended: ${reason}`);showSc
 socket.on('disconnect',()=>{showToast('Disconnected');});
 
 // ===================== INIT CREATURES =====================
+// (first incomplete click listener removed — using the complete one below)
 
 // Spawn monkey occasionally
 let monkeyTimer=0;
@@ -1152,7 +1183,7 @@ setInterval(()=>{monkeyTimer++;if(monkeyTimer>1&&Math.random()<0.15){new Monkey(
 
 // T-Rex quip at end of round
 let trexInstance=null;
-// Dino quip triggered inside main reveal handler
+socket.on('reveal',function triggerDinoQuip(){if(trexInstance)trexInstance.quip();});
 
 document.addEventListener('click',()=>{
   if(!musicPlaying)startMusic();
