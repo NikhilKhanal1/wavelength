@@ -1145,11 +1145,6 @@ socket.on('gameCancelled',({reason})=>{showToast(`Game ended: ${reason}`);showSc
 socket.on('disconnect',()=>{showToast('Disconnected');});
 
 // ===================== INIT CREATURES =====================
-document.addEventListener('click',()=>{
-  if(!musicPlaying) startMusic();
-  new TRex();
-  for(let i=0;i<3;i++) setTimeout(()=>new PixelBird(), i*2000);
-},{once:true});
 
 // Spawn monkey occasionally
 let monkeyTimer=0;
