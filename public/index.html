@@ -297,6 +297,28 @@ body::after {
   padding: 0 4px;
 }
 
+
+/* Readability fix: pin labels on dial */
+.dial-pin .pin-label {
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* Ensure player name text always readable */
+.result-row .name, .score-row .name, .player-chip {
+  text-shadow: 0 0 3px var(--bg);
+}
+/* Prompt panel text */
+.prompt-entry .prompt-text {
+  color: var(--text);
+}
+/* Guest status chips */
+.guess-status .status-chip {
+  color: var(--text);
+}
+
 </style>
 </head>
 <body>
