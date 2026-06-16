@@ -930,6 +930,7 @@ socket.on('reactionBroadcast',({icon,from})=>{
 
 // ===================== SOCKET + GAME STATE =====================
 const socket = io();
+let promptHistory = [];
 let myName = '', myIcon = 'star', isHost = false, isTuner = false;
 let currentTimer = null, timerDuration = 20, guessLocked = false;
 
@@ -946,35 +947,7 @@ function showToast(msg){const e=document.querySelector('.toast');if(e)e.remove()
 function getIconSVG(name,size=24){return `<svg width="${size}" height="${size}" class="player-icon"><use href="#ico-${name}"/></svg>`;}
 
 // ===================== PROMPT HISTORY + FIRE REACTIONS =====================
-function _unusedPromptPanel() {
-  let panel = document.getElementById('prompt-panel');
-  if(!panel){panel=document.createElement('div');panel.id='prompt-panel';panel.className='prompt-panel';document.body.appendChild(panel);}
-  panel.innerHTML = '';
-  promptHistory.forEach((p, i) => {
-    const entry = document.createElement('div');
-    entry.className = 'prompt-entry';
-    entry.innerHTML = `
-      <div style="flex:1;overflow:hidden;">
-        <div class="prompt-text">${p.answer}</div>
-        <div class="prompt-tuner">${p.tuner} — ${p.category}</div>
-      </div>
-      <button class="fire-btn ${p.myFire?'fired':''}" data-idx="${i}">
-        <span>🔥</span><span class="fire-count">${p.fires||0}</span>
-      </button>
-    `;
-    entry.querySelector('.fire-btn').addEventListener('click', (e) => {
-      if(p.myFire) return;
-      p.myFire = true;
-      socket.emit('fireReaction', { turnIndex: i });
-      playSound('score');
-      const btn = e.currentTarget;
-      const rect = btn.getBoundingClientRect();
-      fireParticles(rect.left+10, rect.top, 12);
-      renderPromptPanel();
-    });
-    panel.appendChild(entry);
-  });
-}
+
 
 // fire reactions replaced by floating reactions
 
@@ -1107,7 +1080,7 @@ function startTimer(duration){
 // ===================== REVEAL (SEMICIRCLE DIAL - NO NUMBERS) =====================
 socket.on('reveal',({actual,category,answer,tunerName,tunerIcon,tunerPoints,results,scores,isLastTurn})=>{
   if(currentTimer){clearInterval(currentTimer);currentTimer=null;}
-  showScreen('screen-reveal');playSound('reveal');
+  showScreen('screen-reveal');playSound('reveal');if(typeof trexInstance!=='undefined'&&trexInstance)trexInstance.quip();
   document.getElementById('reveal-category').textContent=category;
   document.getElementById('reveal-answer').textContent=answer;
   document.getElementById('reveal-number').textContent=''; // no number shown!
@@ -1184,7 +1157,7 @@ setInterval(()=>{monkeyTimer++;if(monkeyTimer>1&&Math.random()<0.15){new Monkey(
 
 // T-Rex quip at end of round
 let trexInstance=null;
-socket.on('reveal',function triggerDinoQuip(){if(trexInstance)trexInstance.quip();});
+// Dino quip triggered inside main reveal handler
 
 document.addEventListener('click',()=>{
   if(!musicPlaying)startMusic();
