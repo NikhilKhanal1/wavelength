@@ -454,6 +454,9 @@ body::after {
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const AudioCtx=window.AudioContext||window.webkitAudioContext;let audioCtx,musicGain,sfxGain,masterGain,musicPlaying=false;
+// ===================== SOCKET + GAME STATE =====================
+const socket = io();
+let promptHistory = [];
 function initAudio(){if(audioCtx)return;audioCtx=new AudioCtx();masterGain=audioCtx.createGain();masterGain.gain.value=1;masterGain.connect(audioCtx.destination);musicGain=audioCtx.createGain();musicGain.gain.value=0.4;musicGain.connect(masterGain);sfxGain=audioCtx.createGain();sfxGain.gain.value=0.6;sfxGain.connect(masterGain);}
 
 // ===================== MUSIC: Lindana (145BPM, Bb-C-F-Cm, pop-punk) =====================
@@ -928,9 +931,6 @@ socket.on('reactionBroadcast',({icon,from})=>{
 });
 
 
-// ===================== SOCKET + GAME STATE =====================
-const socket = io();
-let promptHistory = [];
 let myName = '', myIcon = 'star', isHost = false, isTuner = false;
 let currentTimer = null, timerDuration = 20, guessLocked = false;
 
