@@ -327,7 +327,7 @@ function startMusic(){
   musicPlaying = true;
 }
 function stopMusic(){
-  if(bgMusic){bgMusic.pause();bgMusic.currentTime=0;}
+  if(bgMusic){bgMusic.pause();}
   musicPlaying = false;
 }
 function playSound(type){initAudio();const osc=audioCtx.createOscillator();const gain=audioCtx.createGain();const filter=audioCtx.createBiquadFilter();osc.connect(filter);filter.connect(gain);gain.connect(sfxGain);filter.type='lowpass';filter.frequency.value=2000;switch(type){case 'join':osc.type='sine';osc.frequency.value=523;gain.gain.value=0.2;gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.35);osc.start();osc.stop(audioCtx.currentTime+0.35);break;case 'select':osc.type='triangle';osc.frequency.value=800;gain.gain.value=0.12;gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.08);osc.start();osc.stop(audioCtx.currentTime+0.08);break;case 'reveal':osc.type='sine';osc.frequency.value=350;osc.frequency.exponentialRampToValueAtTime(750,audioCtx.currentTime+0.4);gain.gain.value=0.18;gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.5);osc.start();osc.stop(audioCtx.currentTime+0.5);break;case 'score':osc.type='sine';osc.frequency.value=440;gain.gain.value=0.18;gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.3);osc.start();osc.stop(audioCtx.currentTime+0.15);setTimeout(()=>{const o2=audioCtx.createOscillator();const g2=audioCtx.createGain();o2.connect(g2);g2.connect(sfxGain);o2.type='sine';o2.frequency.value=660;g2.gain.value=0.18;g2.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.35);o2.start();o2.stop(audioCtx.currentTime+0.35);},100);break;case 'gameover':osc.type='sine';gain.gain.value=0.18;[262,330,392,523].forEach((f,i)=>{osc.frequency.setValueAtTime(f,audioCtx.currentTime+i*0.15);});gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.8);osc.start();osc.stop(audioCtx.currentTime+0.8);break;case 'pin':osc.type='sine';osc.frequency.value=200+Math.random()*100;gain.gain.value=0.15;gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.2);filter.frequency.value=800;osc.start();osc.stop(audioCtx.currentTime+0.2);break;case 'dot':osc.type='sine';osc.frequency.value=500+Math.random()*200;gain.gain.value=0.08;gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.1);osc.start();osc.stop(audioCtx.currentTime+0.1);break;case 'whoosh':osc.type='sine';osc.frequency.value=150;osc.frequency.exponentialRampToValueAtTime(50,audioCtx.currentTime+0.25);gain.gain.value=0.08;gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.25);osc.start();osc.stop(audioCtx.currentTime+0.25);break;case 'lock':osc.type='triangle';osc.frequency.value=400;gain.gain.value=0.12;osc.frequency.setValueAtTime(400,audioCtx.currentTime);osc.frequency.setValueAtTime(520,audioCtx.currentTime+0.07);gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.18);osc.start();osc.stop(audioCtx.currentTime+0.18);break;case 'countdown':osc.type='sine';osc.frequency.value=880;gain.gain.value=0.05;gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.12);osc.start();osc.stop(audioCtx.currentTime+0.12);break;case 'vineunfurl':{osc.disconnect();const nb=audioCtx.createBuffer(1,audioCtx.sampleRate*1,audioCtx.sampleRate);const nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;const ns=audioCtx.createBufferSource();ns.buffer=nb;const nf=audioCtx.createBiquadFilter();nf.type='lowpass';nf.frequency.setValueAtTime(2000,audioCtx.currentTime);nf.frequency.exponentialRampToValueAtTime(500,audioCtx.currentTime+1);const ng=audioCtx.createGain();ng.gain.setValueAtTime(0.09,audioCtx.currentTime);ng.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+1);ns.connect(nf);nf.connect(ng);ng.connect(sfxGain);ns.start();ns.stop(audioCtx.currentTime+1.1);break;}case 'splat':osc.type='sine';osc.frequency.value=100;gain.gain.setValueAtTime(0.12,audioCtx.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.05);osc.start();osc.stop(audioCtx.currentTime+0.06);break;}}
@@ -832,7 +832,14 @@ function buildDial(actual,results,myName){
       const color=PALETTE[i%PALETTE.length];
       const isMe=r.name===myName;
       const pg=document.createElementNS('http://www.w3.org/2000/svg','g');
-      pg.setAttribute('class','dial-pin'+(isMe?' is-me':''));const dirs=[[-250,-100],[250,-100],[-200,-200],[200,-200],[0,-300]];const d=dirs[Math.floor(Math.random()*dirs.length)];pg.style.setProperty('--pin-dx',d[0]+'px');pg.style.setProperty('--pin-dy',d[1]+'px');if(i%2===1)pg.style.animation='parachuteDrop2 1.4s cubic-bezier(0.22,0.61,0.36,1)';
+      var dirs=[[-300,-200],[300,-200],[-300,100],[300,100],[0,-350]];
+      var dir=dirs[Math.floor(Math.random()*dirs.length)];
+      var animName='pinFrom'+i;
+      var styleEl=document.createElement('style');
+      styleEl.textContent='@keyframes '+animName+'{0%{transform:translate('+dir[0]+'px,'+dir[1]+'px) rotate('+(Math.random()*40-20)+'deg) scale(0.4);opacity:0;}60%{transform:translate(0,5px) rotate('+(Math.random()*10-5)+'deg) scale(1.05);opacity:1;}100%{transform:translate(0,0) rotate(0) scale(1);opacity:1;}}';
+      document.head.appendChild(styleEl);
+      pg.setAttribute('class','dial-pin'+(isMe?' is-me':''));
+      pg.style.animation=animName+' '+(1+Math.random()*0.6)+'s cubic-bezier(0.22,0.61,0.36,1)';const dirs=[[-250,-100],[250,-100],[-200,-200],[200,-200],[0,-300]];const d=dirs[Math.floor(Math.random()*dirs.length)];pg.style.setProperty('--pin-dx',d[0]+'px');pg.style.setProperty('--pin-dy',d[1]+'px');if(i%2===1)pg.style.animation='parachuteDrop2 1.4s cubic-bezier(0.22,0.61,0.36,1)';
       // Pin circle
       const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
       c.setAttribute('cx',pt.x);c.setAttribute('cy',pt.y);
@@ -1252,11 +1259,9 @@ document.addEventListener('click',()=>{
   if(musicSlider){
     musicSlider.addEventListener('input', function(e){
       try {
-        initAudio();
-        if(bgMusic) bgMusic.volume = e.target.value / 100; if(musicGain) musicGain.gain.value = e.target.value / 100;
-        if(!musicPlaying && e.target.value > 0) startMusic();
-        if(e.target.value == 0 && musicPlaying) stopMusic();
-        if(bgMusic) bgMusic.volume = e.target.value / 100;
+        var vol = e.target.value / 100;
+        if(bgMusic){bgMusic.volume = vol; if(vol>0 && bgMusic.paused) bgMusic.play().catch(function(){});}
+        if(!musicPlaying && vol > 0) startMusic();
       } catch(err){}
     });
   }
