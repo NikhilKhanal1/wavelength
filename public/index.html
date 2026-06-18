@@ -400,7 +400,6 @@ class PixelBird {
     }
     requestAnimationFrame(()=>this.animate());
   }
-}
   dropPoop(){
     const px=this.x+24;const py=parseInt(this.canvas.style.top)||this.y;
     const poop=document.createElement('canvas');
@@ -430,6 +429,8 @@ class PixelBird {
       requestAnimationFrame(fallAnim);
     };fallAnim();
   }
+}
+
 
 
 // ===================== PIXEL MONKEY (swinging Tarzan-style) =====================
