@@ -1,7 +1,8 @@
-<!DOCTYPE html>
+<style>body{margin:0}img{display:block;max-width:100%}</style><style>:root{--code-bg:#1e1e2e;--code-fg:#cdd6f4;--code-border:#313244}@media(prefers-color-scheme:light){:root{--code-bg:#eff1f5;--code-fg:#4c4f69;--code-border:#ccd0da}}pre{background:var(--code-bg);color:var(--code-fg);border:1px solid var(--code-border);border-radius:6px;padding:12px 16px;overflow-x:auto;font-size:13px;line-height:1.6;tab-size:4}pre code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;white-space:pre}code:not(pre code){background:rgba(128,128,128,0.15);padding:0.15em 0.4em;border-radius:4px;font-size:0.9em;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}</style><script>(function(){function S(){var d={};Object.defineProperties(this,{getItem:{value:function(k){return d.hasOwnProperty(k)?d[k]:null}},setItem:{value:function(k,v){var o=d[k]||null;d[k]=String(v);this.length=Object.keys(d).length}},removeItem:{value:function(k){delete d[k];this.length=Object.keys(d).length}},clear:{value:function(){d={};this.length=0}},key:{value:function(i){return Object.keys(d)[i]||null}},length:{value:0,writable:true}})}try{window.localStorage}catch(e){Object.defineProperty(window,'localStorage',{value:new S(),configurable:true})}try{window.sessionStorage}catch(e){Object.defineProperty(window,'sessionStorage',{value:new S(),configurable:true})}var hp=history.pushState;history.pushState=function(){try{hp.apply(history,arguments)}catch(e){}};var hr=history.replaceState;history.replaceState=function(){try{hr.apply(history,arguments)}catch(e){}};try{document.cookie}catch(e){Object.defineProperty(document,'cookie',{get:function(){return ''},set:function(){},configurable:true})}})();</script><script>document.addEventListener('click',function(e){var a=e.target.closest('a[href^="#"]');if(!a)return;e.preventDefault();var id=a.getAttribute('href').slice(1);if(!id)return;var el=document.getElementById(id);if(el){el.scrollIntoView({behavior:'smooth',block:'start'});}try{history.replaceState(null,'','#'+id)}catch(e){}});</script><!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wavelength</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
@@ -667,6 +668,13 @@ class PixelDog {
     if(this.barkTimer>1800&&Math.random()<0.003){this.bark();this.barkTimer=0;}
     requestAnimationFrame(()=>this.animLoop());
   }
+  dropNewBall(x,y){
+    this.ballPopped=false;this.crying=false;this.ballReplaced=false;this.ballClicks=0;
+    this.ballX=x;this.ballY=y;this.ballVx=(Math.random()-0.5)*4;this.ballVy=0;this.ballMoving=true;
+    this.ballCanvas.style.display='block';
+    this.drawBall();this.drawDog(0);
+  }
+
   showQuip(){
     if(Math.random()>0.15)return;
     const quips=["Woof.","Bark.","Bork!","Ball?","*pant pant*","Arf!","Woof woof.","Bork bork!"];
