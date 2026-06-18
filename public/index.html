@@ -319,194 +319,20 @@ body::after { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0
 const AudioCtx=window.AudioContext||window.webkitAudioContext;let audioCtx,musicGain,sfxGain,masterGain,musicPlaying=false;
 function initAudio(){if(audioCtx)return;audioCtx=new AudioCtx();masterGain=audioCtx.createGain();masterGain.gain.value=1;masterGain.connect(audioCtx.destination);musicGain=audioCtx.createGain();musicGain.gain.value=0.4;musicGain.connect(masterGain);sfxGain=audioCtx.createGain();sfxGain.gain.value=0.6;sfxGain.connect(masterGain);}
 
-// ===================== MUSIC: Fun 808 Pop (134BPM, F Major, bouncy & harmonic) =====================
-class MusicEngine {
-  constructor(ctx, gainNode) {
-    this.ctx = ctx; this.out = gainNode;
-    this.playing = false; this.bpm = 134;
-    this.beatDur = 60/this.bpm; this.barDur = this.beatDur*4;
-    this.nextBarTime = 0; this.barIndex = 0; this.schedulerTimer = null;
-    this.section = 'verse'; this.sectionBar = 0;
-    this.verseLen = 8; this.chorusLen = 8; this.bridgeLen = 4;
-    // Rich major 7th / 9th voicings for that lush happy sound
-    // Verse: BbMaj7 - C9 - Dm7 - BbMaj7
-    this.verseChords = [
-      [233.08,293.66,349.23,440],[261.63,329.63,392,466.16],[293.66,349.23,440,523.25],[233.08,293.66,349.23,440],
-      [233.08,293.66,349.23,440],[261.63,329.63,392,466.16],[220,261.63,329.63,392],[233.08,293.66,349.23,440]
-    ];
-    // Chorus: FMaj7 - Gm9 - BbMaj7 - C9  (brighter, more energy)
-    this.chorusChords = [
-      [174.61,261.63,329.63,440],[196,233.08,293.66,349.23],[233.08,293.66,349.23,440],[261.63,329.63,392,466.16],
-      [174.61,261.63,329.63,440],[196,233.08,293.66,349.23],[233.08,293.66,349.23,440],[261.63,329.63,392,523.25]
-    ];
-    // Bridge: Dm9 - BbMaj7 - C9 - FMaj7 (resolution)
-    this.bridgeChords = [
-      [293.66,349.23,440,523.25],[233.08,293.66,349.23,440],[261.63,329.63,392,466.16],[174.61,261.63,329.63,440]
-    ];
-    this.verseBass=[116.54,130.81,146.83,116.54,116.54,130.81,110,116.54];
-    this.chorusBass=[87.31,98,116.54,130.81,87.31,98,116.54,130.81];
-    this.bridgeBass=[146.83,116.54,130.81,87.31];
-    // Bouncy melody (pentatonic-ish, fun intervals)
-    this.verseMelody=[[523.25,.5],[0,.25],[466.16,.5],[440,.75],[392,.5],[349.23,.5],[392,.5],[440,1],[0,1],[466.16,.5],[523.25,.75],[466.16,.5],[440,1.5]];
-    this.chorusMelody=[[587.33,.5],[523.25,.5],[587.33,.75],[659.25,.75],[587.33,.5],[523.25,.5],[466.16,.75],[440,.5],[392,.5],[440,1],[523.25,1.5]];
-    this.bridgeMelody=[[440,.75],[523.25,.75],[587.33,1],[523.25,.75],[466.16,.75],[440,1],[392,.75],[440,.75],[523.25,2]];
-  }
-  start(){if(this.playing)return;this.playing=true;this.nextBarTime=this.ctx.currentTime+0.1;this.barIndex=0;this.sectionBar=0;this.section='verse';this.schedule();}
-  stop(){this.playing=false;if(this.schedulerTimer){clearTimeout(this.schedulerTimer);this.schedulerTimer=null;}}
-  schedule(){if(!this.playing)return;while(this.nextBarTime<this.ctx.currentTime+2.0){this.playBar(this.nextBarTime);this.nextBarTime+=this.barDur;this.barIndex++;this.sectionBar++;this.checkSection();}this.schedulerTimer=setTimeout(()=>this.schedule(),150);}
-  checkSection(){
-    if(this.section==='verse'&&this.sectionBar>=this.verseLen){this.section='chorus';this.sectionBar=0;}
-    else if(this.section==='chorus'&&this.sectionBar>=this.chorusLen){this.section='bridge';this.sectionBar=0;}
-    else if(this.section==='bridge'&&this.sectionBar>=this.bridgeLen){this.section='verse';this.sectionBar=0;}
-  }
-  getChord(){
-    if(this.section==='verse')return this.verseChords[this.sectionBar%this.verseChords.length];
-    if(this.section==='chorus')return this.chorusChords[this.sectionBar%this.chorusChords.length];
-    return this.bridgeChords[this.sectionBar%this.bridgeChords.length];
-  }
-  getBass(){
-    if(this.section==='verse')return this.verseBass[this.sectionBar%this.verseBass.length];
-    if(this.section==='chorus')return this.chorusBass[this.sectionBar%this.chorusBass.length];
-    return this.bridgeBass[this.sectionBar%this.bridgeBass.length];
-  }
-  playBar(time){
-    const chord=this.getChord();const bass=this.getBass();
-    this.playPad(time,chord);
-    this.play808Bass(time,bass);
-    this.play808Drums(time);
-    this.playPluck(time,chord);
-    if(this.sectionBar%2===0)this.playMelody(time);
-  }
-  // Warm pad (lush stacked harmony, slow attack)
-  playPad(time,notes){
-    const dur=this.barDur*0.92;
-    notes.forEach(freq=>{
-      [0,5,-5].forEach(det=>{
-        const osc=this.ctx.createOscillator();const g=this.ctx.createGain();const f=this.ctx.createBiquadFilter();
-        osc.type='sine';osc.frequency.value=freq;osc.detune.value=det;
-        f.type='lowpass';f.frequency.value=1600;
-        g.gain.setValueAtTime(0,time);g.gain.linearRampToValueAtTime(0.014,time+dur*0.2);
-        g.gain.setValueAtTime(0.014,time+dur*0.65);g.gain.linearRampToValueAtTime(0,time+dur);
-        osc.connect(f);f.connect(g);g.connect(this.out);osc.start(time);osc.stop(time+dur+0.01);
-      });
-    });
-  }
-  // 808 sub bass (deep sine with pitch drop + distortion character)
-  play808Bass(time,root){
-    const eighth=this.beatDur/2;
-    // Bouncy pattern: hit-rest-hit-rest-hit-hit-rest-hit
-    const hits=[0,2,4,5,7];
-    hits.forEach(i=>{
-      const t=time+i*eighth;
-      const osc=this.ctx.createOscillator();const g=this.ctx.createGain();const f=this.ctx.createBiquadFilter();
-      osc.type='sine';
-      osc.frequency.setValueAtTime(root*1.02,t);
-      osc.frequency.exponentialRampToValueAtTime(root,t+0.05);
-      f.type='lowpass';f.frequency.value=300;
-      g.gain.setValueAtTime(0.14,t);g.gain.exponentialRampToValueAtTime(0.02,t+eighth*1.2);
-      osc.connect(f);f.connect(g);g.connect(this.out);osc.start(t);osc.stop(t+eighth*1.4);
-      // Sub harmonic
-      const sub=this.ctx.createOscillator();const sg=this.ctx.createGain();
-      sub.type='sine';sub.frequency.value=root/2;
-      sg.gain.setValueAtTime(0.06,t);sg.gain.exponentialRampToValueAtTime(0.005,t+eighth);
-      sub.connect(sg);sg.connect(this.out);sub.start(t);sub.stop(t+eighth*1.2);
-    });
-  }
-  // 808 drums (deep kick, snappy snare, bouncy hi-hats with rolls)
-  play808Drums(time){
-    const sixteenth=this.beatDur/4;
-    for(let i=0;i<16;i++){
-      const t=time+i*sixteenth;
-      // Kick: 1, 4, 7, 9, 12 (bouncy trap-ish)
-      if(i===0||i===6||i===8||i===12)this.kick808(t);
-      // Snare/clap: 4 and 12
-      if(i===4||i===12)this.snare808(t);
-      // Hi-hats: all 16ths with rolls on certain beats
-      this.hat808(t,i%4===0,i>=12?0.8:0.5);
-    }
-    // Hat roll on beat 4 (fast triplets for bounce)
-    const triplet=this.beatDur/6;
-    for(let i=0;i<6;i++){
-      this.hat808(time+3*this.beatDur+i*triplet,false,0.4);
-    }
-  }
-  // Deep 808 kick
-  kick808(t){
-    const osc=this.ctx.createOscillator();const g=this.ctx.createGain();
-    osc.type='sine';
-    osc.frequency.setValueAtTime(200,t);
-    osc.frequency.exponentialRampToValueAtTime(30,t+0.15);
-    g.gain.setValueAtTime(0.18,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.3);
-    osc.connect(g);g.connect(this.out);osc.start(t);osc.stop(t+0.35);
-    // Click transient
-    const click=this.ctx.createOscillator();const cg=this.ctx.createGain();
-    click.type='square';click.frequency.value=800;
-    cg.gain.setValueAtTime(0.04,t);cg.gain.exponentialRampToValueAtTime(0.001,t+0.01);
-    click.connect(cg);cg.connect(this.out);click.start(t);click.stop(t+0.015);
-  }
-  // Snappy 808 snare
-  snare808(t){
-    const buf=this.ctx.createBuffer(1,this.ctx.sampleRate*0.12,this.ctx.sampleRate);
-    const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
-    const src=this.ctx.createBufferSource();src.buffer=buf;
-    const f=this.ctx.createBiquadFilter();f.type='bandpass';f.frequency.value=4000;f.Q.value=1.5;
-    const g=this.ctx.createGain();g.gain.setValueAtTime(0.09,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.11);
-    src.connect(f);f.connect(g);g.connect(this.out);src.start(t);src.stop(t+0.12);
-    // Body tone
-    const o=this.ctx.createOscillator();const g2=this.ctx.createGain();
-    o.type='sine';o.frequency.value=220;o.frequency.exponentialRampToValueAtTime(120,t+0.04);
-    g2.gain.setValueAtTime(0.06,t);g2.gain.exponentialRampToValueAtTime(0.001,t+0.05);
-    o.connect(g2);g2.connect(this.out);o.start(t);o.stop(t+0.06);
-  }
-  // Crisp hi-hat
-  hat808(t,open,vel){
-    const dur=open?0.08:0.025;
-    const buf=this.ctx.createBuffer(1,this.ctx.sampleRate*dur,this.ctx.sampleRate);
-    const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
-    const src=this.ctx.createBufferSource();src.buffer=buf;
-    const f=this.ctx.createBiquadFilter();f.type='highpass';f.frequency.value=open?7000:10000;
-    const g=this.ctx.createGain();const v=(vel||0.5)*0.04;
-    g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);
-    src.connect(f);f.connect(g);g.connect(this.out);src.start(t);src.stop(t+dur+0.01);
-  }
-  // Plucky synth (bouncy rhythm, chord stabs)
-  playPluck(time,chord){
-    const eighth=this.beatDur/2;
-    // Rhythmic pattern: stab-rest-stab-stab-rest-stab-rest-stab
-    const hits=[0,2,3,5,7];
-    hits.forEach(i=>{
-      const t=time+i*eighth;
-      chord.forEach(freq=>{
-        const osc=this.ctx.createOscillator();const g=this.ctx.createGain();const f=this.ctx.createBiquadFilter();
-        osc.type='triangle';osc.frequency.value=freq;
-        f.type='lowpass';f.frequency.value=2500;
-        g.gain.setValueAtTime(0.02,t);g.gain.exponentialRampToValueAtTime(0.002,t+eighth*0.6);
-        osc.connect(f);f.connect(g);g.connect(this.out);osc.start(t);osc.stop(t+eighth*0.7);
-      });
-    });
-  }
-  // Lead melody (sits nicely on top, not too loud)
-  playMelody(time){
-    const melody=this.section==='verse'?this.verseMelody:this.section==='chorus'?this.chorusMelody:this.bridgeMelody;
-    let t=time;
-    melody.forEach(([freq,dur])=>{
-      const noteDur=dur*this.beatDur;
-      if(freq>0){
-        const osc=this.ctx.createOscillator();const g=this.ctx.createGain();const f=this.ctx.createBiquadFilter();
-        osc.type='square';osc.frequency.value=freq;
-        f.type='lowpass';f.frequency.value=2400;f.Q.value=0.5;
-        g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.013,t+0.015);
-        g.gain.setValueAtTime(0.013,t+noteDur*0.6);g.gain.exponentialRampToValueAtTime(0.001,t+noteDur*0.88);
-        osc.connect(f);f.connect(g);g.connect(this.out);osc.start(t);osc.stop(t+noteDur*0.9);
-      }
-      t+=noteDur;
-    });
-  }
+// ===================== MUSIC: MP3 Loop =====================
+let bgMusic = null;
+function startMusic(){
+  if(bgMusic) return;
+  bgMusic = new Audio('/Main Menu - New Super Mario Bros. U OST.mp3');
+  bgMusic.loop = true;
+  bgMusic.volume = 0.4;
+  bgMusic.play().catch(()=>{});
+  musicPlaying = true;
 }
-
-let musicEngine=null;
-function startMusic(){initAudio();if(!musicEngine)musicEngine=new MusicEngine(audioCtx,musicGain);musicEngine.start();musicPlaying=true;}
-function stopMusic(){if(musicEngine)musicEngine.stop();musicPlaying=false;}
+function stopMusic(){
+  if(bgMusic){bgMusic.pause();bgMusic.currentTime=0;}
+  musicPlaying = false;
+}
 function playSound(type){initAudio();const osc=audioCtx.createOscillator();const gain=audioCtx.createGain();const filter=audioCtx.createBiquadFilter();osc.connect(filter);filter.connect(gain);gain.connect(sfxGain);filter.type='lowpass';filter.frequency.value=2000;switch(type){case 'join':osc.type='sine';osc.frequency.value=523;gain.gain.value=0.2;gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.35);osc.start();osc.stop(audioCtx.currentTime+0.35);break;case 'select':osc.type='triangle';osc.frequency.value=800;gain.gain.value=0.12;gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.08);osc.start();osc.stop(audioCtx.currentTime+0.08);break;case 'reveal':osc.type='sine';osc.frequency.value=350;osc.frequency.exponentialRampToValueAtTime(750,audioCtx.currentTime+0.4);gain.gain.value=0.18;gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.5);osc.start();osc.stop(audioCtx.currentTime+0.5);break;case 'score':osc.type='sine';osc.frequency.value=440;gain.gain.value=0.18;gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.3);osc.start();osc.stop(audioCtx.currentTime+0.15);setTimeout(()=>{const o2=audioCtx.createOscillator();const g2=audioCtx.createGain();o2.connect(g2);g2.connect(sfxGain);o2.type='sine';o2.frequency.value=660;g2.gain.value=0.18;g2.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.35);o2.start();o2.stop(audioCtx.currentTime+0.35);},100);break;case 'gameover':osc.type='sine';gain.gain.value=0.18;[262,330,392,523].forEach((f,i)=>{osc.frequency.setValueAtTime(f,audioCtx.currentTime+i*0.15);});gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.8);osc.start();osc.stop(audioCtx.currentTime+0.8);break;case 'pin':osc.type='sine';osc.frequency.value=200+Math.random()*100;gain.gain.value=0.15;gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.2);filter.frequency.value=800;osc.start();osc.stop(audioCtx.currentTime+0.2);break;case 'dot':osc.type='sine';osc.frequency.value=500+Math.random()*200;gain.gain.value=0.08;gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.1);osc.start();osc.stop(audioCtx.currentTime+0.1);break;case 'whoosh':osc.type='sine';osc.frequency.value=150;osc.frequency.exponentialRampToValueAtTime(50,audioCtx.currentTime+0.25);gain.gain.value=0.08;gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.25);osc.start();osc.stop(audioCtx.currentTime+0.25);break;case 'lock':osc.type='triangle';osc.frequency.value=400;gain.gain.value=0.12;osc.frequency.setValueAtTime(400,audioCtx.currentTime);osc.frequency.setValueAtTime(520,audioCtx.currentTime+0.07);gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.18);osc.start();osc.stop(audioCtx.currentTime+0.18);break;case 'countdown':osc.type='sine';osc.frequency.value=880;gain.gain.value=0.05;gain.gain.exponentialRampToValueAtTime(0.01,audioCtx.currentTime+0.12);osc.start();osc.stop(audioCtx.currentTime+0.12);break;case 'vineunfurl':{osc.disconnect();const nb=audioCtx.createBuffer(1,audioCtx.sampleRate*1,audioCtx.sampleRate);const nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;const ns=audioCtx.createBufferSource();ns.buffer=nb;const nf=audioCtx.createBiquadFilter();nf.type='lowpass';nf.frequency.setValueAtTime(2000,audioCtx.currentTime);nf.frequency.exponentialRampToValueAtTime(500,audioCtx.currentTime+1);const ng=audioCtx.createGain();ng.gain.setValueAtTime(0.03,audioCtx.currentTime);ng.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+1);ns.connect(nf);nf.connect(ng);ng.connect(sfxGain);ns.start();ns.stop(audioCtx.currentTime+1.1);break;}case 'splat':osc.type='sine';osc.frequency.value=100;gain.gain.setValueAtTime(0.12,audioCtx.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.05);osc.start();osc.stop(audioCtx.currentTime+0.06);break;}}
 // Controls moved to end of script for reliability
 
@@ -765,6 +591,8 @@ class PixelDog {
     this.ballCanvas.style.display='none';
     this.drawDogSad();
     this.crying=true;
+    this.ballReplaced=false;
+    setTimeout(()=>{if(!monkeyActive){monkeyActive=true;new Monkey();}},5000);
   }
   drawDogSad(){
     const c=this.ctx;c.clearRect(0,0,32,24);
@@ -794,12 +622,14 @@ class PixelDog {
       this.updateBallPos();
     } else {
       const target=this.ballX+14;
-      if(Math.abs(this.dogX-target)>5){const dir=target>this.dogX?1:-1;this.dogX+=dir*1.5;this.canvas.style.left=this.dogX+'px';this.canvas.style.transform=dir<0?'scaleX(-1)':'scaleX(1)';}
+      if(Math.abs(this.dogX-target)>5){const dir=target>this.dogX?1:-1;this.dogX+=dir*1.5;this.canvas.style.left=this.dogX+'px';this.canvas.style.transform=dir>0?'scaleX(-1)':'scaleX(1)';}
     }
     // Crying tears
     if(this.crying&&Math.random()<0.3){
-      particles.push(new Particle(this.dogX+12,window.innerHeight-48,'#4488ff',{speed:1,gravity:0.15,decay:0.015,size:2,angle:Math.PI/2+Math.random()*0.3}));
-      particles.push(new Particle(this.dogX+20,window.innerHeight-48,'#4488ff',{speed:1,gravity:0.15,decay:0.015,size:2,angle:Math.PI/2+Math.random()*0.3}));
+      const eyeOffset1=this.canvas.style.transform==='scaleX(-1)'?48:16;
+      const eyeOffset2=this.canvas.style.transform==='scaleX(-1)'?40:24;
+      particles.push(new Particle(this.dogX+eyeOffset1,window.innerHeight-48,'#4488ff',{speed:1,gravity:0.15,decay:0.015,size:2,angle:Math.PI/2+Math.random()*0.3}));
+      particles.push(new Particle(this.dogX+eyeOffset2,window.innerHeight-48,'#4488ff',{speed:1,gravity:0.15,decay:0.015,size:2,angle:Math.PI/2+Math.random()*0.3}));
     }
     // Rare random bark
     if(!this.barkTimer)this.barkTimer=0;
@@ -808,7 +638,6 @@ class PixelDog {
     requestAnimationFrame(()=>this.animLoop());
   }
   showQuip(){
-    if(Math.random()>0.1)return;
     const quips=["Woof.","Bark.","Bork!","Ball?","*pant pant*","Arf!","Woof woof.","Bork bork!"];
     const isRainbow=Math.random()<0.08;
     const text=isRainbow?"Nobody will believe you.":quips[Math.floor(Math.random()*quips.length)];
@@ -1360,7 +1189,7 @@ socket.on('disconnect',()=>{showToast('Disconnected');});
 // ===================== INIT CREATURES =====================
 let monkeyTimer=0,monkeyActive=false,dogInstance=null;
 setInterval(()=>{if(dogInstance&&dogInstance.showQuip)dogInstance.showQuip();},45000);
-setInterval(()=>{monkeyTimer++;if(monkeyTimer>2&&!monkeyActive&&Math.random()<0.12){monkeyActive=true;new Monkey();monkeyTimer=0;}},45000);
+setInterval(()=>{monkeyTimer++;if(monkeyTimer>0&&!monkeyActive&&Math.random()<0.3){monkeyActive=true;new Monkey();monkeyTimer=0;}},20000);
 
 
 document.addEventListener('click',()=>{
@@ -1380,9 +1209,10 @@ document.addEventListener('click',()=>{
     musicSlider.addEventListener('input', function(e){
       try {
         initAudio();
-        if(musicGain) musicGain.gain.value = e.target.value / 100;
+        if(bgMusic) bgMusic.volume = e.target.value / 100; if(musicGain) musicGain.gain.value = e.target.value / 100;
         if(!musicPlaying && e.target.value > 0) startMusic();
         if(e.target.value == 0 && musicPlaying) stopMusic();
+        if(bgMusic) bgMusic.volume = e.target.value / 100;
       } catch(err){}
     });
   }
