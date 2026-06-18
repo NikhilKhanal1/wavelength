@@ -561,7 +561,7 @@ class PixelDog {
     this.tailFrame=0;this.dogX=window.innerWidth*0.8;
     this.ballCanvas=document.createElement('canvas');
     this.ballCanvas.width=12;this.ballCanvas.height=12;
-    this.ballCanvas.style.cssText='position:fixed;z-index:14;cursor:pointer;image-rendering:pixelated;width:28px;height:28px;';
+    this.ballCanvas.style.cssText='position:fixed;z-index:14;cursor:pointer;image-rendering:pixelated;width:28px;height:28px;top:0;left:0;';
     this.ballCanvas.addEventListener('click',()=>this.squeakBall());
     document.body.appendChild(this.ballCanvas);
     this.drawBall();
@@ -591,7 +591,7 @@ class PixelDog {
     for(let x=0;x<12;x++)for(let y=0;y<12;y++){const dx=x-6,dy=y-6;if(dx*dx+dy*dy<=30){c.fillStyle=Math.sin(Math.atan2(dy,dx)*2)>0?'#e74c3c':'#3498db';c.fillRect(x,y,1,1);}}
     c.fillStyle='#fff';c.fillRect(4,3,2,2);
   }
-  updateBallPos(){this.ballCanvas.style.left=this.ballX+'px';this.ballCanvas.style.bottom=(window.innerHeight-this.ballY-28)+'px';}
+  updateBallPos(){this.ballCanvas.style.left=this.ballX+'px';this.ballCanvas.style.top=this.ballY+'px';}
   bark(){
     initAudio();
     const o=audioCtx.createOscillator();const g=audioCtx.createGain();
