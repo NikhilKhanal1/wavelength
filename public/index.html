@@ -561,7 +561,7 @@ class PixelDog {
     this.tailFrame=0;this.dogX=window.innerWidth*0.8;
     this.ballCanvas=document.createElement('canvas');
     this.ballCanvas.width=12;this.ballCanvas.height=12;
-    this.ballCanvas.style.cssText='position:fixed;z-index:14;cursor:pointer;image-rendering:pixelated;width:28px;height:28px;top:0;left:0;';
+    this.ballCanvas.style.cssText='position:fixed;z-index:14;cursor:pointer;image-rendering:pixelated;width:28px;height:28px;';
     this.ballCanvas.addEventListener('click',()=>this.squeakBall());
     document.body.appendChild(this.ballCanvas);
     this.drawBall();
@@ -640,7 +640,7 @@ class PixelDog {
     draw(23,10,BR);draw(24,10,BR);draw(24,11,BR);
   }
   animLoop(){
-    this.tailFrame++;
+    try{ this.tailFrame++;
     if(this.tailFrame%12===0)this.drawDog(this.tailFrame%24<12?1:-1);
     if(this.ballMoving){
       this.ballVy+=this.gravity;this.ballX+=this.ballVx;this.ballY+=this.ballVy;
@@ -667,6 +667,7 @@ class PixelDog {
     this.barkTimer++;
     if(this.barkTimer>1800&&Math.random()<0.003){this.bark();this.barkTimer=0;}
     requestAnimationFrame(()=>this.animLoop());
+    }catch(err){requestAnimationFrame(()=>this.animLoop());}
   }
   dropNewBall(x,y){
     this.ballPopped=false;this.crying=false;this.ballReplaced=false;this.ballClicks=0;
