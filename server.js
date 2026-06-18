@@ -98,7 +98,30 @@ function calculateTunerScore(guesses, actual) {
   return score;
 }
 
+
+function getPublicLobbies() {
+  const lobbies = [];
+  for (const [code, room] of rooms) {
+    if (room.state === 'lobby') {
+      lobbies.push({
+        code: room.code,
+        hostName: room.players.find(p => p.isHost)?.name || 'Unknown',
+        playerCount: room.players.length,
+        maxPlayers: 15
+      });
+    }
+  }
+  return lobbies;
+}
+
+function broadcastLobbies() {
+  io.emit('lobbyList', getPublicLobbies());
+}
+
 io.on('connection', (socket) => {
+  // Send lobby list on connect
+  socket.emit('lobbyList', getPublicLobbies());
+
   socket.on('createRoom', ({ playerName, icon }) => {
     const code = generateRoomCode();
     const room = {
@@ -111,6 +134,7 @@ io.on('connection', (socket) => {
     };
     rooms.set(code, room); socket.join(code); socket.roomCode = code;
     socket.emit('roomCreated', { code, players: room.players, settings: room.settings });
+    broadcastLobbies();
   });
 
   socket.on('joinRoom', ({ code, playerName, icon }) => {
@@ -122,6 +146,7 @@ io.on('connection', (socket) => {
     socket.join(code.toUpperCase()); socket.roomCode = code.toUpperCase();
     socket.emit('roomJoined', { code: room.code, players: room.players, settings: room.settings });
     socket.to(room.code).emit('playerJoined', { players: room.players });
+    broadcastLobbies();
   });
 
   socket.on('updateSettings', ({ timer, totalRounds }) => {
@@ -142,6 +167,7 @@ io.on('connection', (socket) => {
     room.currentRound = 0; room.currentTurnIndex = 0; room.state = 'playing';
     room.usedCategories = []; room.promptHistory = []; room.fireReactions = {};
     io.to(room.code).emit('gameStarted', { turnOrder: room.turnOrder.map(i => room.players[i].name) });
+    broadcastLobbies();
     startTurn(room);
   });
 
@@ -226,6 +252,7 @@ io.on('connection', (socket) => {
     room.state = 'lobby'; room.currentRound = 0; room.currentTurnIndex = 0;
     room.usedCategories = []; room.promptHistory = []; room.fireReactions = {};
     io.to(room.code).emit('backToLobby', { players: room.players, settings: room.settings });
+    broadcastLobbies();
   });
 
   
@@ -242,7 +269,7 @@ io.on('connection', (socket) => {
     if (playerIdx === -1) return;
     const wasHost = room.players[playerIdx].isHost;
     room.players.splice(playerIdx, 1);
-    if (room.players.length === 0) { rooms.delete(socket.roomCode); return; }
+    if (room.players.length === 0) { rooms.delete(socket.roomCode); broadcastLobbies(); return; }
     if (wasHost) { room.players[0].isHost = true; io.to(room.code).emit('hostTransferred', { newHost: room.players[0].name }); }
     io.to(room.code).emit('playerLeft', { players: room.players });
     if (room.state !== 'lobby' && room.players.length < 3) { room.state = 'lobby'; io.to(room.code).emit('gameCancelled', { reason: 'Not enough players' }); }
