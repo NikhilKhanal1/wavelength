@@ -1,4 +1,4 @@
-<style>body{margin:0}img{display:block;max-width:100%}</style><style>:root{--code-bg:#1e1e2e;--code-fg:#cdd6f4;--code-border:#313244}@media(prefers-color-scheme:light){:root{--code-bg:#eff1f5;--code-fg:#4c4f69;--code-border:#ccd0da}}pre{background:var(--code-bg);color:var(--code-fg);border:1px solid var(--code-border);border-radius:6px;padding:12px 16px;overflow-x:auto;font-size:13px;line-height:1.6;tab-size:4}pre code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;white-space:pre}code:not(pre code){background:rgba(128,128,128,0.15);padding:0.15em 0.4em;border-radius:4px;font-size:0.9em;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}</style><script>(function(){function S(){var d={};Object.defineProperties(this,{getItem:{value:function(k){return d.hasOwnProperty(k)?d[k]:null}},setItem:{value:function(k,v){var o=d[k]||null;d[k]=String(v);this.length=Object.keys(d).length}},removeItem:{value:function(k){delete d[k];this.length=Object.keys(d).length}},clear:{value:function(){d={};this.length=0}},key:{value:function(i){return Object.keys(d)[i]||null}},length:{value:0,writable:true}})}try{window.localStorage}catch(e){Object.defineProperty(window,'localStorage',{value:new S(),configurable:true})}try{window.sessionStorage}catch(e){Object.defineProperty(window,'sessionStorage',{value:new S(),configurable:true})}var hp=history.pushState;history.pushState=function(){try{hp.apply(history,arguments)}catch(e){}};var hr=history.replaceState;history.replaceState=function(){try{hr.apply(history,arguments)}catch(e){}};try{document.cookie}catch(e){Object.defineProperty(document,'cookie',{get:function(){return ''},set:function(){},configurable:true})}})();</script><script>document.addEventListener('click',function(e){var a=e.target.closest('a[href^="#"]');if(!a)return;e.preventDefault();var id=a.getAttribute('href').slice(1);if(!id)return;var el=document.getElementById(id);if(el){el.scrollIntoView({behavior:'smooth',block:'start'});}try{history.replaceState(null,'','#'+id)}catch(e){}});</script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -605,12 +605,8 @@ class PixelDog {
     if(this.ballPopped)return;
     this.ballClicks++;
     if(this.ballClicks>=10){this.popBall();return;}
-    initAudio();
-    const o=audioCtx.createOscillator();const g=audioCtx.createGain();
-    o.type='sine';o.frequency.value=1200;o.frequency.exponentialRampToValueAtTime(800,audioCtx.currentTime+0.1);
-    g.gain.setValueAtTime(0.12,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.12);
-    o.connect(g);g.connect(sfxGain);o.start();o.stop(audioCtx.currentTime+0.15);
     this.ballVx=(Math.random()-0.5)*16;this.ballVy=-(Math.random()*5+5);this.ballMoving=true;
+    try{initAudio();var o=audioCtx.createOscillator();var g=audioCtx.createGain();o.type='sine';o.frequency.value=1200;o.frequency.exponentialRampToValueAtTime(800,audioCtx.currentTime+0.1);g.gain.setValueAtTime(0.12,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.12);o.connect(g);g.connect(sfxGain);o.start();o.stop(audioCtx.currentTime+0.15);}catch(e){}
   }
   popBall(){
     this.ballPopped=true;
