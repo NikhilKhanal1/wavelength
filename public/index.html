@@ -839,7 +839,6 @@ function buildDial(actual,results,myName){
       styleEl.textContent='@keyframes '+animName+'{0%{transform:translate('+dir[0]+'px,'+dir[1]+'px) rotate('+(Math.random()*40-20)+'deg) scale(0.4);opacity:0;}60%{transform:translate(0,5px) rotate('+(Math.random()*10-5)+'deg) scale(1.05);opacity:1;}100%{transform:translate(0,0) rotate(0) scale(1);opacity:1;}}';
       document.head.appendChild(styleEl);
       pg.setAttribute('class','dial-pin'+(isMe?' is-me':''));
-      pg.style.animation=animName+' '+(1+Math.random()*0.6)+'s cubic-bezier(0.22,0.61,0.36,1)';const dirs=[[-250,-100],[250,-100],[-200,-200],[200,-200],[0,-300]];const d=dirs[Math.floor(Math.random()*dirs.length)];pg.style.setProperty('--pin-dx',d[0]+'px');pg.style.setProperty('--pin-dy',d[1]+'px');if(i%2===1)pg.style.animation='parachuteDrop2 1.4s cubic-bezier(0.22,0.61,0.36,1)';
       // Pin circle
       const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
       c.setAttribute('cx',pt.x);c.setAttribute('cy',pt.y);
