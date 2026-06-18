@@ -141,6 +141,7 @@ io.on('connection', (socket) => {
     const room = rooms.get(code?.toUpperCase());
     if (!room) return socket.emit('error', { message: 'Room not found' });
     if (room.state !== 'lobby') return socket.emit('error', { message: 'Game already in progress' });
+    if (room.players.length >= 25) return socket.emit('error', { message: 'Room is full (25 max)' });
     if (room.players.find(p => p.name === playerName)) return socket.emit('error', { message: 'Name already taken' });
     room.players.push({ id: socket.id, name: playerName, icon: icon||'star', score: 0, isHost: false });
     socket.join(code.toUpperCase()); socket.roomCode = code.toUpperCase();
