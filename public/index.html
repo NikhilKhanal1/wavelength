@@ -851,7 +851,7 @@ function buildDial(actual,results,myName){
     const lt=document.createElementNS('http://www.w3.org/2000/svg','text');
     lt.setAttribute('x',lp.x);lt.setAttribute('y',lp.y);lt.setAttribute('text-anchor','middle');
     lt.setAttribute('font-family','JetBrains Mono');lt.setAttribute('font-size','10');
-    lt.setAttribute('fill',color.replace(/[^,]+\)$/,'1)'));lt.setAttribute('font-weight','700');
+    lt.setAttribute('fill','var(--text-dim)');lt.setAttribute('font-weight','700');
     lt.textContent=label;svg.appendChild(lt);
   });
 
