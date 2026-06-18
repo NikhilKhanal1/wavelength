@@ -157,8 +157,9 @@ body::after { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0
 /* Floating reaction balloon drift */
 .floating-reaction {
   position: fixed; font-size: 28px; z-index: 95; pointer-events: none;
-  transition: bottom 8s linear, opacity 8s ease;
+  animation: reactionSway 2s ease-in-out infinite alternate;
 }
+@keyframes reactionSway { 0%{margin-left:-15px} 100%{margin-left:15px} }
 
 </style>
 </head>
@@ -390,9 +391,46 @@ class PixelBird {
     if(this.flapFrame%400===0&&Math.random()<0.2){
       if(audioCtx){const o=audioCtx.createOscillator();const g=audioCtx.createGain();o.type='sine';o.frequency.value=2000+Math.random()*1000;o.frequency.exponentialRampToValueAtTime(1500,audioCtx.currentTime+0.08);g.gain.value=0.02;g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.1);o.connect(g);g.connect(sfxGain);o.start();o.stop(audioCtx.currentTime+0.12);}
     }
+    // Bird poop (rare)
+    if(!this.poopTimer)this.poopTimer=0;
+    this.poopTimer++;
+    if(this.poopTimer>2000&&Math.random()<0.002){
+      this.poopTimer=0;
+      this.dropPoop();
+    }
     requestAnimationFrame(()=>this.animate());
   }
 }
+  dropPoop(){
+    const px=this.x+24;const py=parseInt(this.canvas.style.top)||this.y;
+    const poop=document.createElement('canvas');
+    poop.width=8;poop.height=6;
+    poop.style.cssText='position:fixed;top:'+py+'px;left:'+px+'px;width:16px;height:12px;z-index:11;pointer-events:none;image-rendering:pixelated;';
+    const pc=poop.getContext('2d');
+    pc.fillStyle='#f5f5f5';pc.fillRect(2,0,1,1);pc.fillRect(1,1,3,1);pc.fillRect(3,2,2,1);
+    pc.fillStyle='#e0e0e0';pc.fillRect(1,2,2,1);pc.fillRect(0,3,4,1);pc.fillRect(1,4,3,1);pc.fillRect(2,5,2,1);
+    pc.fillStyle='#bbb';pc.fillRect(4,3,2,1);pc.fillRect(3,4,2,1);
+    document.body.appendChild(poop);
+    // Fall to ground
+    let poopY=py;const floor=window.innerHeight-20;
+    const fallAnim=()=>{
+      poopY+=4;poop.style.top=poopY+'px';
+      if(poopY>=floor){
+        poop.style.top=floor+'px';
+        // Emit smell particles for 8 seconds
+        let smellTimer=0;
+        const smellInterval=setInterval(()=>{
+          smellTimer++;
+          if(smellTimer>40){clearInterval(smellInterval);poop.style.transition='opacity 1s';poop.style.opacity='0';setTimeout(()=>poop.remove(),1000);return;}
+          const sx=parseFloat(poop.style.left)+8;
+          particles.push(new Particle(sx,floor-5,Math.random()>0.5?'#ddd':'#666',{speed:0.5+Math.random(),gravity:-0.05,decay:0.02,size:1.5+Math.random(),upward:1}));
+        },200);
+        return;
+      }
+      requestAnimationFrame(fallAnim);
+    };fallAnim();
+  }
+
 
 // ===================== PIXEL MONKEY (swinging Tarzan-style) =====================
 class Monkey {
@@ -984,9 +1022,9 @@ function floatReaction(r){
   const el=document.createElement('div');
   el.className='floating-reaction';
   el.innerHTML=r.svg?r.svg.replace('width="28"','width="32"').replace('height="28"','height="32"'):'';
-  el.style.cssText='position:fixed;bottom:80px;left:'+(30+Math.random()*40)+'%;z-index:95;pointer-events:none;opacity:1;transition:bottom 6s linear,opacity 2s ease 3s;font-size:28px;';
+  const startLeft=30+Math.random()*40;el.style.cssText='position:fixed;bottom:80px;left:'+startLeft+'%;z-index:95;pointer-events:none;opacity:1;font-size:28px;transition:bottom 6s linear,opacity 2s ease 3s,transform 6s ease,font-size 6s ease;';
   document.body.appendChild(el);
-  requestAnimationFrame(()=>{el.style.bottom='110%';el.style.opacity='0';});
+  requestAnimationFrame(()=>{el.style.bottom='110%';el.style.opacity='0';el.style.fontSize='48px';el.style.transform='translateX('+(Math.random()>0.5?'':'-')+(20+Math.random()*40)+'px)';});
   setTimeout(()=>el.remove(),9000);
 }
 
