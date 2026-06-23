@@ -90,13 +90,37 @@ function buildDial(actual, results, myName) {
       var isMe = r.name === myName;
       var pg = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       pg.setAttribute('class', 'dial-pin' + (isMe ? ' is-me' : ''));
-      var c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      c.setAttribute('cx', pt.x); c.setAttribute('cy', pt.y);
-      c.setAttribute('r', isMe ? '14' : '10'); c.setAttribute('fill', color);
-      c.setAttribute('stroke', isMe ? '#fff' : 'rgba(255,255,255,0.5)');
-      c.setAttribute('stroke-width', isMe ? '3' : '2');
-      if (isMe) c.setAttribute('filter', 'url(#glow)');
-      pg.appendChild(c);
+      // Animate: start from random off-screen position, drift to final spot
+      var dirs = [[-250,-180],[250,-180],[-200,150],[200,150],[0,-280]];
+      var dir = dirs[Math.floor(Math.random() * dirs.length)];
+      var animName = 'pinDrop' + i + '_' + Date.now();
+      var styleEl = document.createElement('style');
+      styleEl.textContent = '@keyframes ' + animName + ' {' +
+        '0% { transform: translate(' + dir[0] + 'px,' + dir[1] + 'px) rotate(' + (Math.random()*40-20) + 'deg) scale(0.3); opacity: 0; }' +
+        '60% { transform: translate(0,6px) rotate(' + (Math.random()*8-4) + 'deg) scale(1.08); opacity: 1; }' +
+        '80% { transform: translate(0,-3px) rotate(0) scale(0.95); opacity: 1; }' +
+        '100% { transform: translate(0,0) rotate(0) scale(1); opacity: 1; } }';
+      document.head.appendChild(styleEl);
+      pg.style.animation = animName + ' 0.9s cubic-bezier(0.22, 0.61, 0.36, 1) forwards';
+      pg.style.opacity = '0';
+      // Render player icon instead of colored circle
+      var iconSize = isMe ? 32 : 24;
+      var iconUse = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+      iconUse.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#ico-' + (r.icon || 'star'));
+      var iconG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      iconG.setAttribute('transform', 'translate(' + (pt.x - iconSize/2) + ',' + (pt.y - iconSize/2) + ') scale(' + (iconSize/32) + ')');
+      iconG.setAttribute('color', color);
+      iconG.appendChild(iconUse);
+      if (isMe) iconG.setAttribute('filter', 'url(#glow)');
+      pg.appendChild(iconG);
+      // Ring around icon
+      var ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      ring.setAttribute('cx', pt.x); ring.setAttribute('cy', pt.y);
+      ring.setAttribute('r', isMe ? '18' : '14'); ring.setAttribute('fill', 'none');
+      ring.setAttribute('stroke', isMe ? '#fff' : color);
+      ring.setAttribute('stroke-width', isMe ? '3' : '2');
+      ring.setAttribute('opacity', '0.8');
+      pg.appendChild(ring);
       var lb = document.createElementNS('http://www.w3.org/2000/svg', 'text');
       lb.setAttribute('x', pt.x); lb.setAttribute('y', pt.y + (isMe ? 26 : 22));
       lb.setAttribute('text-anchor', 'middle'); lb.setAttribute('font-family', 'JetBrains Mono');
@@ -106,9 +130,11 @@ function buildDial(actual, results, myName) {
       pg.appendChild(lb);
       svg.appendChild(pg);
       playSound('pin');
-      container.style.transition = 'transform 0.12s';
-      container.style.transform = 'rotate(' + (Math.random() - 0.5) * 1.5 + 'deg)';
-      setTimeout(function() { container.style.transform = ''; }, 120);
+      container.style.transition = 'transform 0.15s cubic-bezier(0.36, 0.07, 0.19, 0.97)';
+      var shakeAngle = (Math.random() - 0.5) * 3;
+      var shakeX = (Math.random() - 0.5) * 6;
+      container.style.transform = 'rotate(' + shakeAngle + 'deg) translateX(' + shakeX + 'px)';
+      setTimeout(function() { container.style.transform = ''; }, 180);
       var svgRect = container.getBoundingClientRect(); var scale = svgRect.width / W;
       explode(svgRect.left + pt.x * scale, svgRect.top + pt.y * scale, 8, [color], {speed: 3, gravity: 0.2});
     }, 800 + i * 600);
