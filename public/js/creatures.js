@@ -31,6 +31,8 @@ class PixelBird {
   }
   animate() {
     if (this.destroyed) return;
+    if (!vfxEnabled) { this.canvas.style.display = 'none'; return; }
+    this.canvas.style.display = '';
     this.x += this.speed; this.wobble += 0.07;
     this.canvas.style.left = this.x + 'px';
     this.canvas.style.top = (this.y + Math.sin(this.wobble) * 12) + 'px';
