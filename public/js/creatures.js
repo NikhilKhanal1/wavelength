@@ -254,7 +254,7 @@ class PixelDog {
   squeakBall() {
     if (this.ballPopped) return;
     this.ballClicks++;
-    if (this.ballClicks >= 10) { this.popBall(); return; }
+    if (this.ballClicks >= 5) { this.popBall(); return; }
     this.ballVx = (Math.random() - 0.5) * 16;
     this.ballVy = -(Math.random() * 5 + 5);
     this.ballMoving = true;
@@ -278,7 +278,7 @@ class PixelDog {
     this.drawDogSad();
     this.crying = true; this.ballReplaced = false;
     var self = this;
-    setTimeout(function() { if (!monkeyActive) { monkeyActive = true; new Monkey(); } }, 5000);
+    setTimeout(function() { if (!monkeyActive && vfxEnabled) { monkeyActive = true; new Monkey(); } }, 20000);
   }
   dropNewBall(x, y) {
     this.ballPopped = false; this.crying = false; this.ballReplaced = false; this.ballClicks = 0;
@@ -289,17 +289,24 @@ class PixelDog {
   }
   showQuip() {
     if (Math.random() > 0.15) return;
-    var quips = ['Woof.','Bark.','Bork!','Ball?','*pant pant*','Arf!','Woof woof.','Bork bork!'];
-    var isRainbow = Math.random() < 0.08;
+    // Rare zoomies (5% chance)
+    if (Math.random() < 0.05) { this.doZoomies(); return; }
+    var quips = [
+      'Woof.', 'Bark.', 'Ball?', '*pant*', 'Arf!',
+      '...', 'Woof woof.', '?!', 'Grr.', '*sniff*',
+      '*yawn*', '!!', 'Bark bark.', '*whine*', 'Ruff.'
+    ];
+    var isRainbow = Math.random() < 0.04;
     var text = isRainbow ? 'Nobody will believe you.' : quips[Math.floor(Math.random() * quips.length)];
     var el = document.createElement('div');
-    el.style.cssText = 'position:fixed;bottom:65px;z-index:16;pointer-events:none;background:#fff;color:#333;padding:8px 14px;border-radius:12px 12px 12px 2px;font-size:0.85rem;font-family:var(--font-body);font-weight:600;box-shadow:0 3px 10px rgba(0,0,0,0.2);left:' + (this.dogX + 10) + 'px;transition:opacity 1s;';
     if (isRainbow) {
-      el.style.background = 'linear-gradient(90deg,#ff6b6b,#feca57,#7ecfa0,#48dbfb,#a07edb,#ff9ff3)';
-      el.style.backgroundSize = '200% 100%'; el.style.webkitBackgroundClip = 'text';
-      el.style.webkitTextFillColor = 'transparent'; el.style.animation = 'rainbowShift 1s linear infinite';
+      el.style.cssText = 'position:fixed;bottom:65px;z-index:16;pointer-events:none;background:#111;color:#fff;padding:8px 14px;border-radius:12px 12px 12px 2px;font-size:0.85rem;font-family:var(--font-body);font-weight:600;border:2px solid #fff;box-shadow:0 3px 15px rgba(0,0,0,0.4);left:' + (this.dogX + 10) + 'px;transition:opacity 1s;';
+      el.innerHTML = '<span style="background:linear-gradient(90deg,#ff6b6b,#feca57,#7ecfa0,#48dbfb,#a07edb,#ff9ff3);background-size:200% 100%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:rainbowShift 1s linear infinite;">' + text + '</span>';
+    } else {
+      el.style.cssText = 'position:fixed;bottom:65px;z-index:16;pointer-events:none;background:#fff;color:#333;padding:8px 14px;border-radius:12px 12px 12px 2px;font-size:0.85rem;font-family:var(--font-body);font-weight:600;box-shadow:0 3px 10px rgba(0,0,0,0.2);left:' + (this.dogX + 10) + 'px;transition:opacity 1s;';
+      el.textContent = text;
     }
-    el.textContent = text; document.body.appendChild(el);
+    document.body.appendChild(el);
     setTimeout(function() { el.style.opacity = '0'; }, 2500);
     setTimeout(function() { el.remove(); }, 3500);
   }
@@ -317,7 +324,10 @@ class PixelDog {
         if (Math.abs(this.ballVx) + Math.abs(this.ballVy) < 0.5) { this.ballMoving = false; }
         this.updateBallPos();
       } else {
-        if (!this.ballPopped && Math.random() < 0.003) { this.squeakBall(); }
+        // Self-play: once per minute max
+        if (!this._lastSelfPlay) this._lastSelfPlay = 0;
+        var now = Date.now();
+        if (now - this._lastSelfPlay > 60000) { this._lastSelfPlay = now; this.squeakBall(); }
         var target = this.ballX + 14;
         if (Math.abs(this.dogX - target) > 5) {
           var dir = target > this.dogX ? 1 : -1; this.dogX += dir * 1.5;
@@ -336,6 +346,48 @@ class PixelDog {
       console.warn('PixelDog animLoop error:', err);
     }
     requestAnimationFrame(this.animLoop.bind(this));
+  }
+  doZoomies() {
+    if (this._zooming) return;
+    this._zooming = true;
+    var self = this;
+    var startX = this.dogX;
+    var startTime = Date.now();
+    var duration = 2500;
+    var points = [];
+    // Generate random waypoints across the screen
+    for (var i = 0; i < 6; i++) {
+      points.push({ x: Math.random() * (window.innerWidth - 80), y: window.innerHeight - 12 - Math.random() * 60 });
+    }
+    points.push({ x: startX, y: window.innerHeight - 12 });
+    var currentPt = 0;
+    var zoomFrame = function() {
+      if (Date.now() - startTime > duration || currentPt >= points.length) {
+        self.dogX = startX;
+        self.canvas.style.left = startX + 'px';
+        self.canvas.style.bottom = '12px';
+        self.canvas.style.transition = '';
+        self._zooming = false;
+        sparkle(startX + 32, window.innerHeight - 30, 10);
+        return;
+      }
+      var target = points[currentPt];
+      var dx = target.x - self.dogX;
+      var speed = 18;
+      if (Math.abs(dx) < speed) {
+        currentPt++;
+      } else {
+        self.dogX += dx > 0 ? speed : -speed;
+      }
+      self.canvas.style.left = self.dogX + 'px';
+      self.canvas.style.transform = dx > 0 ? 'scaleX(-1)' : 'scaleX(1)';
+      // Leave little dust puffs
+      if (Math.random() < 0.4) {
+        particles.push(new Particle(self.dogX + 32, window.innerHeight - 20, '#ccc', {speed: 1.5, gravity: 0.05, decay: 0.03, size: 2, upward: 1}));
+      }
+      requestAnimationFrame(zoomFrame);
+    };
+    zoomFrame();
   }
   destroy() { this.destroyed = true; this.canvas.remove(); this.ballCanvas.remove(); }
 }
