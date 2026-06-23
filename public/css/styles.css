@@ -172,3 +172,8 @@ body::after { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0
   .icon-picker { grid-template-columns: repeat(6, 1fr); }
   .controls-panel { top: 8px; right: 8px; }
 }
+
+/* VFX Toggle */
+.vfx-toggle { width: 32px; height: 32px; border-radius: 6px; background: var(--accent-cyan); border: none; cursor: pointer; font-size: 1rem; color: #fff; transition: all 0.3s; display: flex; align-items: center; justify-content: center; }
+.vfx-toggle:hover { transform: scale(1.1); }
+.vfx-toggle.off { background: var(--surface-light); color: var(--text-dim); opacity: 0.6; }
