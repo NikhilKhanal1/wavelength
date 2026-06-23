@@ -1,5 +1,7 @@
 // effects.js - Particle engine, background animation, reactions
 
+let vfxEnabled = true;
+
 // ===================== PARTICLE ENGINE =====================
 const particleCanvas = document.getElementById('particle-canvas');
 const pCtx = particleCanvas.getContext('2d');
@@ -60,6 +62,7 @@ class Particle {
 }
 
 function explode(x, y, count, colors, opts) {
+  if (!vfxEnabled) return;
   count = count || 40; colors = colors || PALETTE; opts = opts || {};
   for (var i = 0; i < count; i++) {
     particles.push(new Particle(x, y, colors[Math.floor(Math.random() * colors.length)], opts));
@@ -67,6 +70,7 @@ function explode(x, y, count, colors, opts) {
 }
 
 function fireParticles(x, y, count) {
+  if (!vfxEnabled) return;
   count = count || 15;
   for (var i = 0; i < count; i++) {
     particles.push(new Particle(x, y, ['#ff4500','#ff6b00','#ffa500','#ffcc00'][Math.floor(Math.random() * 4)], {
@@ -76,6 +80,7 @@ function fireParticles(x, y, count) {
 }
 
 function explodeConfetti(x, y, count) {
+  if (!vfxEnabled) return;
   count = count || 25;
   for (var i = 0; i < count; i++) {
     particles.push(new Particle(x, y, PALETTE[Math.floor(Math.random() * PALETTE.length)], {
@@ -85,6 +90,7 @@ function explodeConfetti(x, y, count) {
 }
 
 function sparkle(x, y, count) {
+  if (!vfxEnabled) return;
   count = count || 10;
   for (var i = 0; i < count; i++) {
     particles.push(new Particle(x, y, '#fff', {
