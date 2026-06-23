@@ -78,7 +78,13 @@ function generateRoomCode() {
   return rooms.has(code) ? generateRoomCode() : code;
 }
 
-function generateNumber() { return Math.round((Math.random() * 7.0 + 1.5) * 10) / 10; }
+function generateNumber() {
+  var n;
+  do {
+    n = Math.round((Math.random() * 7.0 + 1.5) * 10) / 10;
+  } while (n >= 3.5 && n <= 6.5 && Math.random() < 0.7);
+  return n;
+}
 
 function calculateScore(guess, actual) {
   const pct = Math.abs(guess - actual) / 9.0;
