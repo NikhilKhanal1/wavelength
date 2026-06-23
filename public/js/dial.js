@@ -103,20 +103,25 @@ function buildDial(actual, results, myName) {
       document.head.appendChild(styleEl);
       pg.style.animation = animName + ' 0.9s cubic-bezier(0.22, 0.61, 0.36, 1) forwards';
       pg.style.opacity = '0';
-      // Render player icon instead of colored circle
-      var iconSize = isMe ? 32 : 24;
+      // Render player icon as a nested <svg> with proper viewBox containment
+      var iconSize = isMe ? 36 : 26;
+      var iconSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      iconSvg.setAttribute('x', pt.x - iconSize/2);
+      iconSvg.setAttribute('y', pt.y - iconSize/2);
+      iconSvg.setAttribute('width', iconSize);
+      iconSvg.setAttribute('height', iconSize);
+      iconSvg.setAttribute('viewBox', '0 0 32 32');
+      iconSvg.setAttribute('overflow', 'visible');
+      iconSvg.style.color = color;
       var iconUse = document.createElementNS('http://www.w3.org/2000/svg', 'use');
-      iconUse.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#ico-' + (r.icon || 'star'));
-      var iconG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      iconG.setAttribute('transform', 'translate(' + (pt.x - iconSize/2) + ',' + (pt.y - iconSize/2) + ') scale(' + (iconSize/32) + ')');
-      iconG.setAttribute('color', color);
-      iconG.appendChild(iconUse);
-      if (isMe) iconG.setAttribute('filter', 'url(#glow)');
-      pg.appendChild(iconG);
+      iconUse.setAttribute('href', '#ico-' + (r.icon || 'star'));
+      iconSvg.appendChild(iconUse);
+      if (isMe) iconSvg.setAttribute('filter', 'url(#glow)');
+      pg.appendChild(iconSvg);
       // Ring around icon
       var ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
       ring.setAttribute('cx', pt.x); ring.setAttribute('cy', pt.y);
-      ring.setAttribute('r', isMe ? '18' : '14'); ring.setAttribute('fill', 'none');
+      ring.setAttribute('r', isMe ? '20' : '15'); ring.setAttribute('fill', 'none');
       ring.setAttribute('stroke', isMe ? '#fff' : color);
       ring.setAttribute('stroke-width', isMe ? '3' : '2');
       ring.setAttribute('opacity', '0.8');
