@@ -351,15 +351,19 @@ socket.on('reactionBroadcast', function(data) {
 let monkeyTimer = 0;
 setInterval(function() { if (dogInstance && dogInstance.showQuip) dogInstance.showQuip(); }, 45000);
 setInterval(function() {
+  if (!vfxEnabled) return;
   monkeyTimer++;
   if (monkeyTimer > 0 && !monkeyActive && Math.random() < 0.3) {
     monkeyActive = true; new Monkey(); monkeyTimer = 0;
   }
 }, 20000);
 
+let birdInstances = [];
 document.addEventListener('click', function() {
   if (!musicPlaying) startMusic();
-  for (var i = 0; i < 4; i++) { (function(idx) { setTimeout(function() { new PixelBird(idx); }, idx * 1500); })(i); }
+  if (vfxEnabled) {
+    for (var i = 0; i < 4; i++) { (function(idx) { setTimeout(function() { var b = new PixelBird(idx); birdInstances.push(b); }, idx * 1500); })(i); }
+  }
   dogInstance = new PixelDog();
   initReactionPanel();
 }, { once: true });
@@ -388,6 +392,23 @@ document.addEventListener('click', function() {
       var html = document.documentElement;
       var current = html.getAttribute('data-theme');
       html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    });
+  }
+
+  var vfxBtn = document.getElementById('ctrl-vfx');
+  if (vfxBtn) {
+    vfxBtn.addEventListener('click', function() {
+      vfxEnabled = !vfxEnabled;
+      vfxBtn.classList.toggle('off', !vfxEnabled);
+      // Remove birds and monkey when toggled off
+      if (!vfxEnabled) {
+        birdInstances.forEach(function(b) { b.destroy(); });
+        birdInstances = [];
+        particles = [];
+      } else {
+        // Re-spawn birds
+        for (var i = 0; i < 4; i++) { (function(idx) { setTimeout(function() { var b = new PixelBird(idx); birdInstances.push(b); }, idx * 1500); })(i); }
+      }
     });
   }
 })();
